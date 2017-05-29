@@ -19,3 +19,7 @@ From these I managed to create a script that can retrieve for you the following:
 - Total upload usage on current connection (Not yet implemented)
 
 The purpose for this was so I could get the current bandwidth usage across the WAN link into openHAB, for monitoring and for making pretty graphs on usage during the day. And I could see the current bandwidth usage at a glance, incase I was having some issues and quick diagnosis. I have made this script a little more bare, without all the openHAB specific stuff in it
+
+#### dependancies
+- bc
+- curl

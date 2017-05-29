@@ -7,22 +7,25 @@ RC_OK=0
 RC_WARN=1
 RC_CRIT=2
 RC_UNKNOWN=3
-
+HOSTNAME=fritz.box
+CHECK=bandwidthdown
 CURL=/usr/bin/curl
-
+#todo fix bandwithd as its all in bytes not bits!!!!
 usage()
 {
-    echo "usage: check_fritz -d -h hostname -f <function> [-w <warn>] [-c crit] [-b rate]"
+    echo "usage: check_fritz -d -h hostname -f <function> [-b rate]"
     echo "    -d: enable debug output"
-    echo "    -w: warn limit, depends on function"
-    echo "    -c: critical limit, depends on function"
     echo "    -b: rate to display. b, k, m. all in bits"
+    echo "    -j: JSON output. Does not accept any functions. Will display all output in json format. Useful for running in cron and ingesting into another program"
     echo "functions:"
     echo "    linkuptime = connection time in seconds."
     echo "    connection = connection status".
-    echo "    upstream   = maximum upstream on current connection."
-    echo "    downstream = maximum downstream on current connection."
-    echo "    bandwidth = Current bandwidth usage"
+    echo "    upstream   = maximum upstream on current connection (Upstream Sync)."
+    echo "    downstream = maximum downstream on current connection (Downstream Sync)."
+    echo "    bandwidthdown = Current bandwidth down"
+    echo "    bandwidthup = Current bandwidth up"
+    echo "    totalbwdown = total downloads"
+    echo "    totalbwup = total uploads"
     exit ${RC_UNKNOWN}
 }
 
@@ -45,22 +48,6 @@ find_xml_value()
     echo "${XML}" | grep "${VAL}" | sed "s/<${VAL}>\([^<]*\)<\/${VAL}>/\1/"
 }
 
-div ()  # Arguments: dividend and divisor
-{
-        if [ $2 -eq 0 ]; then echo division by 0; exit; fi
-        local p=12                            # precision
-        local c=${c:-0}                       # precision counter
-        local d=.                             # decimal separator
-        local r=$(($1/$2)); echo -n $r        # result of division
-        local m=$(($r*$2))
-        [ $c -eq 0 ] && [ $m -ne $1 ] && echo -n $d
-        [ $1 -eq $m ] || [ $c -eq $p ] && return
-        local e=$(($1-$m))
-        let c=c+1
-        div $(($e*10)) $2
-}  
-
-
 check_greater()
 {
     VAL=$1
@@ -80,19 +67,79 @@ check_greater()
     fi
 }
 
-HOSTNAME=fritz.box
+print_json(){
+   echo "hey"
+    VERB1=GetStatusInfo
+    URL1=WANIPConn1
+    NS1=WANIPConnection
+
+    VERB2=GetCommonLinkProperties
+    URL2=WANCommonIFC1
+    NS2=WANCommonInterfaceConfig
+
+    VERB3=GetAddonInfos
+    URL3=WANCommonIFC1
+    NS3=WANCommonInterfaceConfig
+
+    STATUS1=`curl "http://${HOSTNAME}:${PORT}/igdupnp/control/${URL1}" \
+        -H "Content-Type: text/xml; charset="utf-8"" \
+        -H "SoapAction:urn:schemas-upnp-org:service:${NS1}:1#${VERB1}" \
+        -d "<?xml version='1.0' encoding='utf-8'?> <s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'> <s:Body> <u:${VERB1} xmlns:u="urn:schemas-upnp-org:service:${NS1}:1" /> </s:Body> </s:Envelope>" \
+        -s`
+
+    if [ "$?" -ne "0" ]; then
+        echo "ERROR - Could not retrieve status from FRITZ!Box"
+        exit ${RC_CRIT}
+    fi
+
+
+    STATUS2=`curl "http://${HOSTNAME}:${PORT}/igdupnp/control/${URL2}" \
+        -H "Content-Type: text/xml; charset="utf-8"" \
+        -H "SoapAction:urn:schemas-upnp-org:service:${NS2}:1#${VERB2}" \
+        -d "<?xml version='1.0' encoding='utf-8'?> <s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'> <s:Body> <u:${VERB2} xmlns:u="urn:schemas-upnp-org:service:${NS2}:1" /> </s:Body> </s:Envelope>" \
+        -s`
+
+    if [ "$?" -ne "0" ]; then
+        echo "ERROR - Could not retrieve status from FRITZ!Box"
+        exit ${RC_CRIT}
+    fi
+
+    STATUS3=`curl "http://${HOSTNAME}:${PORT}/igdupnp/control/${URL3}" \
+        -H "Content-Type: text/xml; charset="utf-8"" \
+        -H "SoapAction:urn:schemas-upnp-org:service:${NS3}:1#${VERB3}" \
+        -d "<?xml version='1.0' encoding='utf-8'?> <s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'> <s:Body> <u:${VERB3} xmlns:u="urn:schemas-upnp-org:service:${NS3}:1" /> </s:Body> </s:Envelope>" \
+        -s`
+
+    if [ "$?" -ne "0" ]; then
+        echo "ERROR - Could not retrieve status from FRITZ!Box"
+        exit ${RC_CRIT}
+    fi
+
+    if [ ${DEBUG} -eq 1 ]; then
+        echo "DEBUG - Status:"
+        echo "${STATUS1}"
+        echo "${STATUS2}"
+        echo "${STATUS3}"
+    fi
+    
+}
+
 PORT=49000
-CHECK=bandwidthdown
 DEBUG=0
 WARN=0
 CRIT=0
 RATE=1
-PRE=bits
+PRE=bytes
 
-while getopts h:f:w:c:d:b: OPTNAME; do
+while getopts h:jf:db: OPTNAME; do
     case "${OPTNAME}" in
     h)
         HOSTNAME="${OPTARG}"
+        ;;
+    j)
+        CHECK=""
+        DEBUG=1
+        print_json
         ;;
     f)
         CHECK="${OPTARG}"
@@ -100,26 +147,19 @@ while getopts h:f:w:c:d:b: OPTNAME; do
     d)
         DEBUG=1
         ;;
-    w)
-        WARN="${OPTARG}"
-        ;;
-    c)
-        CRIT="${OPTARG}"
-        ;;
     b)
-        echo $OPTARG
         case "${OPTARG}" in
         b)
             RATE=1
-            PRE=bits
+            PRE=bytes
             ;;
         k)
-            RATE=1024
-            PRE=kilobits
+            RATE=1000
+            PRE=kilobytes
             ;;
         m)
-            RATE=1024*1024
-            PRE=megabits
+            RATE=1000000
+            PRE=megabytes
             ;;
         *)
             echo "Wrong prefix"
@@ -127,6 +167,7 @@ while getopts h:f:w:c:d:b: OPTNAME; do
         esac
         ;;
     *)
+        echo $OPTNAME
         usage
         ;;
     esac
@@ -201,16 +242,18 @@ downstream)
     ;;
 bandwidthdown)
     BANDWIDTHDOWNBITS=$(find_xml_value "${STATUS}" NewByteReceiveRate)
-    BANDWIDTHDOWN=$((BANDWIDTHDOWNBITS/RATE))
+    #BANDWIDTHDOWN=$((BANDWIDTHDOWNBITS/RATE))
+    BANDWIDTHDOWN=$(echo "scale=3;$BANDWIDTHDOWNBITS/$RATE" | bc)
     RESULT="Current download ${BANDWIDTHDOWN} ${PRE} per second"
-    printf "Current download %.3f %s per second" $BANDWIDTHDOWN $PRE
-    check_greater ${BANDWIDTHDOWN} ${WARN} ${CRIT} "${RESULT}"
+    echo "${RESULT}"
+    #check_greater ${BANDWIDTHDOWN} ${WARN} ${CRIT} "${RESULT}"
     ;;
 bandwidthup)
     BANDWIDTHUPBITS=$(find_xml_value "${STATUS}" NewByteSendRate)
-    BANDWIDTHUP=$((BANDWIDTHUPBITS/RATE))
+    BANDWIDTHUP=$(echo "scale=3;$BANDWIDTHUPBITS/$RATE" | bc)
     RESULT="Current upload ${BANDWIDTHUP} ${PRE} per second"
-    check_greater ${BANDWIDTHUP} ${WARN} ${CRIT} "${RESULT}"
+    echo "${RESULT}"
+    #check_greater ${BANDWIDTHUP} ${WARN} ${CRIT} "${RESULT}"
     ;;
 totalbwdown)
     TOTALBWDOWNBITS=$(find_xml_value "${STATUS}" NewTotalBytesReceived)
