@@ -10,13 +10,17 @@ RC_UNKNOWN=3
 HOSTNAME=fritz.box
 CHECK=bandwidthdown
 CURL=/usr/bin/curl
-#todo fix bandwithd as its all in bytes not bits!!!!
+#todo Do JSON output
+#todo fix upstream function displaying other rates (b, k,m)
+#todo fix downstream function displaying other rates (b, k,m)
+
 usage()
 {
-    echo "usage: check_fritz -d -h hostname -f <function> [-b rate]"
+    echo "usage: fritzbox-api.sh -d -h hostname -f <function> [-b rate]"
     echo "    -d: enable debug output"
     echo "    -b: rate to display. b, k, m. all in bits"
     echo "    -j: JSON output. Does not accept any functions. Will display all output in json format. Useful for running in cron and ingesting into another program"
+    echo " "
     echo "functions:"
     echo "    linkuptime = connection time in seconds."
     echo "    connection = connection status".
@@ -26,6 +30,7 @@ usage()
     echo "    bandwidthup = Current bandwidth up"
     echo "    totalbwdown = total downloads"
     echo "    totalbwup = total uploads"
+    echo "Default with no added parameters"
     exit ${RC_UNKNOWN}
 }
 
@@ -257,13 +262,15 @@ bandwidthup)
     ;;
 totalbwdown)
     TOTALBWDOWNBITS=$(find_xml_value "${STATUS}" NewTotalBytesReceived)
-    TOTALBWDOWN=$((TOTALBWDOWNBITS/RATE))
+    #TOTALBWDOWN=$((TOTALBWDOWNBITS/RATE))
+    TOTALBWDOWN=$(echo "scale=3;$TOTALBWDOWNBITS/$RATE" | bc)
     RESULT="total download ${TOTALBWDOWN} ${PRE}"
     check_greater ${TOTALBWDOWN} ${WARN} ${CRIT} "${RESULT}"
     ;;
 totalbwup)
     TOTALBWUPBITS=$(find_xml_value "${STATUS}" NewTotalBytesSent)
-    TOTALBWUP=$((TOTALBWUPBITS/RATE))
+    #TOTALBWUP=$((TOTALBWUPBITS/RATE))
+    TOTALBWUP=$(echo "scale=3;$TOTALBWUPBITS/$RATE" | bc)
     RESULT="total uploads ${TOTALBWUP} ${PRE}"
     check_greater ${TOTALBWUP} ${WARN} ${CRIT} "${RESULT}"
     ;;
