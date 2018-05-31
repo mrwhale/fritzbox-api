@@ -10,9 +10,6 @@ RC_UNKNOWN=3
 HOSTNAME=127.0.0.1
 CHECK=bandwidthdown
 CURL=/usr/bin/curl
-#todo Do JSON output
-#todo fix upstream function displaying other rates (b, k,m)
-#todo fix downstream function displaying other rates (b, k,m)
 usage(){
     echo "usage: check_fritz -d -j -h hostname -f <function> [-b rate]"
     echo "    -d: enable debug output"
