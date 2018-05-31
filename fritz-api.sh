@@ -10,7 +10,10 @@ RC_UNKNOWN=3
 HOSTNAME=127.0.0.1
 CHECK=bandwidthdown
 CURL=/usr/bin/curl
-#todo fix bandwithd as its all in bytes not bits!!!!
+#todo Do JSON output
+#todo fix upstream function displaying other rates (b, k,m)
+#todo fix downstream function displaying other rates (b, k,m)
+
 usage()
 {
     echo "usage: check_fritz -d -j -h hostname -f <function> [-b rate]"
@@ -26,6 +29,7 @@ usage()
     echo "    bandwidthup = Current bandwidth up"
     echo "    totalbwdown = total downloads"
     echo "    totalbwup = total uploads"
+    echo "Default with no added parameters"
     exit ${RC_UNKNOWN}
 }
 
