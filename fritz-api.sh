@@ -3,7 +3,7 @@ RC_OK=0
 RC_WARN=1
 RC_CRIT=2
 RC_UNKNOWN=3
-HOSTNAME=fritz.box
+HOSTNAME=127.0.0.1
 CHECK=bandwidthdown
 CURL=/usr/bin/curl
 usage(){
@@ -20,7 +20,7 @@ usage(){
     echo "    bandwidthup = Current bandwidth up"
     echo "    totalbwdown = total downloads"
     echo "    totalbwup = total uploads"
-    echo "bandwidth down is the efault if no added parameters"
+    echo "bandwidth down is the default if no added parameters"
     exit ${RC_UNKNOWN}
 }
 

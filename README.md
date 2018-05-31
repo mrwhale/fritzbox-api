@@ -23,6 +23,24 @@ This can also output all of the above in  JSON format, useful for ingesting into
 
 The purpose for this was so I could get the current bandwidth usage across the WAN link into openHAB, for monitoring and for making pretty graphs on usage during the day. And I could see the current bandwidth usage at a glance, incase I was having some issues and quick diagnosis. I have made this script a little more bare, without all the openHAB specific stuff in it
 
+## Usage
+```
+usage: fritz -d -j -h hostname -f <function> [-b rate]
+    -d: enable debug output
+    -j: JSON output. Does not accept any functions. Will display all output in json format. Useful for running in cron and ingesting into another program
+    -b: rate to display. b, k, m. all in  bytes
+functions:
+    linkuptime = connection time in seconds.
+    connection = connection status.
+    upstream   = maximum upstream on current connection (Upstream Sync).
+    downstream = maximum downstream on current connection (Downstream Sync).
+    bandwidthdown = Current bandwidth down
+    bandwidthup = Current bandwidth up
+    totalbwdown = total downloads
+    totalbwup = total uploads
+bandwidth down is the default if no added parameters
+```
+
 #### dependancies
 - bc
 - curl
