@@ -7,16 +7,16 @@ RC_OK=0
 RC_WARN=1
 RC_CRIT=2
 RC_UNKNOWN=3
-HOSTNAME=fritz.box
+HOSTNAME=127.0.0.1
 CHECK=bandwidthdown
 CURL=/usr/bin/curl
 #todo fix bandwithd as its all in bytes not bits!!!!
 usage()
 {
-    echo "usage: check_fritz -d -h hostname -f <function> [-b rate]"
+    echo "usage: check_fritz -d -j -h hostname -f <function> [-b rate]"
     echo "    -d: enable debug output"
-    echo "    -b: rate to display. b, k, m. all in bits"
     echo "    -j: JSON output. Does not accept any functions. Will display all output in json format. Useful for running in cron and ingesting into another program"
+    echo "    -b: rate to display. b, k, m. all in  bytes"
     echo "functions:"
     echo "    linkuptime = connection time in seconds."
     echo "    connection = connection status".
@@ -68,7 +68,6 @@ check_greater()
 }
 
 print_json(){
-   echo "hey"
     VERB1=GetStatusInfo
     URL1=WANIPConn1
     NS1=WANIPConnection
@@ -88,7 +87,7 @@ print_json(){
         -s`
 
     if [ "$?" -ne "0" ]; then
-        echo "ERROR - Could not retrieve status from FRITZ!Box"
+        printf '{"Connection":"ERROR - Could not retrieve status from FRITZ!Box"}'
         exit ${RC_CRIT}
     fi
 
@@ -100,7 +99,7 @@ print_json(){
         -s`
 
     if [ "$?" -ne "0" ]; then
-        echo "ERROR - Could not retrieve status from FRITZ!Box"
+        printf '{"Connection":"ERROR - Could not retrieve status from FRITZ!Box"}'
         exit ${RC_CRIT}
     fi
 
@@ -111,17 +110,30 @@ print_json(){
         -s`
 
     if [ "$?" -ne "0" ]; then
-        echo "ERROR - Could not retrieve status from FRITZ!Box"
+        printf '{"Connection":"ERROR - Could not retrieve status from FRITZ!Box"}'
         exit ${RC_CRIT}
     fi
-
+    CONNECTIONSTATUS=$(find_xml_value "${STATUS1}" NewConnectionStatus)
+    UPTIME=$(find_xml_value "${STATUS1}" NewUptime)
+    DOWNSTREAM=$(find_xml_value "${STATUS2}" NewLayer1DownstreamMaxBitRate)
+    UPSTREAM=$(find_xml_value "${STATUS2}" NewLayer1UpstreamMaxBitRate)
+    BANDWIDTHDOWNBYTES=$(find_xml_value "${STATUS3}" NewByteReceiveRate)
+    BANDWIDTHUPBYTES=$(find_xml_value "${STATUS3}" NewByteSendRate)
+    TOTALBWDOWNBYTES=$(find_xml_value "${STATUS3}" NewTotalBytesReceived)
+    TOTALBWUPBYTES=$(find_xml_value "${STATUS3}" NewTotalBytesSent)
     if [ ${DEBUG} -eq 1 ]; then
         echo "DEBUG - Status:"
-        echo "${STATUS1}"
-        echo "${STATUS2}"
-        echo "${STATUS3}"
+        echo $CONNECTIONSTATUS
+        echo $UPTIME
+        echo $DOWNSTREAM
+        echo $UPSTREAM
+        echo $BANDWIDTHDOWNBYTES
+        echo $BANDWIDTHUPBYTES
+        echo $TOTALBWDOWNBYTES
+        echo $TOTALBWUPBYTES
     fi
-    
+    printf '{"Connection":"%s","Uptime":%d,"UpstreamSync":%d,"DownstreamSync":%d,"UploadBW":%d,"DownloadBW":%d,"TotalUploads":%d,"TotalDownloads":%d}\n' "$CONNECTIONSTATUS" $UPTIME $UPSTREAM $DOWNSTREAM $BANDWIDTHUPBYTES $BANDWITDHDOWNBYTES $TOTALBWUPBYTES $TOTALBWDOWNBYTES
+    exit #exit so we dont get unknown service check error
 }
 
 PORT=49000
@@ -241,31 +253,33 @@ downstream)
     check_greater ${DOWNSTREAM} ${WARN} ${CRIT} "${RESULT}"
     ;;
 bandwidthdown)
-    BANDWIDTHDOWNBITS=$(find_xml_value "${STATUS}" NewByteReceiveRate)
+    BANDWIDTHDOWNBYTES=$(find_xml_value "${STATUS}" NewByteReceiveRate)
     #BANDWIDTHDOWN=$((BANDWIDTHDOWNBITS/RATE))
-    BANDWIDTHDOWN=$(echo "scale=3;$BANDWIDTHDOWNBITS/$RATE" | bc)
+    BANDWIDTHDOWN=$(echo "scale=3;$BANDWIDTHDOWNBYTES/$RATE" | bc)
     RESULT="Current download ${BANDWIDTHDOWN} ${PRE} per second"
     echo "${RESULT}"
     #check_greater ${BANDWIDTHDOWN} ${WARN} ${CRIT} "${RESULT}"
     ;;
 bandwidthup)
-    BANDWIDTHUPBITS=$(find_xml_value "${STATUS}" NewByteSendRate)
-    BANDWIDTHUP=$(echo "scale=3;$BANDWIDTHUPBITS/$RATE" | bc)
+    BANDWIDTHUPBYTES=$(find_xml_value "${STATUS}" NewByteSendRate)
+    BANDWIDTHUP=$(echo "scale=3;$BANDWIDTHUPBYTES/$RATE" | bc)
     RESULT="Current upload ${BANDWIDTHUP} ${PRE} per second"
     echo "${RESULT}"
     #check_greater ${BANDWIDTHUP} ${WARN} ${CRIT} "${RESULT}"
     ;;
 totalbwdown)
-    TOTALBWDOWNBITS=$(find_xml_value "${STATUS}" NewTotalBytesReceived)
-    TOTALBWDOWN=$((TOTALBWDOWNBITS/RATE))
+    TOTALBWDOWNBYTES=$(find_xml_value "${STATUS}" NewTotalBytesReceived)
+    TOTALBWDOWN=$(echo "scale=3;$TOTALBWDOWNBYTES/$RATE" | bc)
     RESULT="total download ${TOTALBWDOWN} ${PRE}"
-    check_greater ${TOTALBWDOWN} ${WARN} ${CRIT} "${RESULT}"
+    echo $RESULT
+    #check_greater ${TOTALBWDOWN} ${WARN} ${CRIT} "${RESULT}"
     ;;
 totalbwup)
-    TOTALBWUPBITS=$(find_xml_value "${STATUS}" NewTotalBytesSent)
-    TOTALBWUP=$((TOTALBWUPBITS/RATE))
+    TOTALBWUPBYTES=$(find_xml_value "${STATUS}" NewTotalBytesSent)
+    TOTALBWUP=$(echo "scale=3;$TOTALBWUPBYTES/$RATE" | bc)
     RESULT="total uploads ${TOTALBWUP} ${PRE}"
-    check_greater ${TOTALBWUP} ${WARN} ${CRIT} "${RESULT}"
+    echo $RESULT
+    #check_greater ${TOTALBWUP} ${WARN} ${CRIT} "${RESULT}"
     ;;
 connection)
     STATE=$(find_xml_value "${STATUS}" NewConnectionStatus)
