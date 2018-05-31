@@ -1,8 +1,8 @@
 #!/bin/bash
 #
 # Thanks to http://blog.gmeiners.net/2013/09/fritzbox-mit-nagios-uberwachen.html# for the basis of the original script
+#and https://stackoverflow.com/questions/12524437/output-json-from-bash-script#12524510
 #
-
 RC_OK=0
 RC_WARN=1
 RC_CRIT=2
@@ -13,9 +13,7 @@ CURL=/usr/bin/curl
 #todo Do JSON output
 #todo fix upstream function displaying other rates (b, k,m)
 #todo fix downstream function displaying other rates (b, k,m)
-
-usage()
-{
+usage(){
     echo "usage: check_fritz -d -j -h hostname -f <function> [-b rate]"
     echo "    -d: enable debug output"
     echo "    -j: JSON output. Does not accept any functions. Will display all output in json format. Useful for running in cron and ingesting into another program"
@@ -145,7 +143,7 @@ DEBUG=0
 WARN=0
 CRIT=0
 RATE=1
-PRE=bytes
+PRE=
 
 while getopts h:jf:db: OPTNAME; do
     case "${OPTNAME}" in
@@ -154,7 +152,6 @@ while getopts h:jf:db: OPTNAME; do
         ;;
     j)
         CHECK=""
-        DEBUG=1
         print_json
         ;;
     f)
@@ -167,15 +164,15 @@ while getopts h:jf:db: OPTNAME; do
         case "${OPTARG}" in
         b)
             RATE=1
-            PRE=bytes
+            PRE=
             ;;
         k)
             RATE=1000
-            PRE=kilobytes
+            PRE=kilo
             ;;
         m)
             RATE=1000000
-            PRE=megabytes
+            PRE=mega
             ;;
         *)
             echo "Wrong prefix"
@@ -231,57 +228,52 @@ case ${CHECK} in
 linkuptime)
     UPTIME=$(find_xml_value "${STATUS}" NewUptime)
     require_number "${UPTIME}" "Could not parse uptime"
-
     HOURS=$((${UPTIME}/3600))
     MINUTES=$(((${UPTIME}-(${HOURS}*3600))/60))
     SECONDS=$((${UPTIME}-(${HOURS}*3600)-(${MINUTES}*60)))
-
     RESULT="Link uptime ${UPTIME} seconds (${HOURS}h ${MINUTES}m ${SECONDS}s)"
-
-    check_greater ${UPTIME} 1 0 "${RESULT}"
+    echo "${RESULT}"
     ;;
 upstream)
-    UPSTREAM=$(find_xml_value "${STATUS}" NewLayer1UpstreamMaxBitRate)
-    require_number "${UPSTREAM}" "Could not parse upstream"
-
-    RESULT="Upstream ${UPSTREAM} bits per second"
-
-    check_greater ${UPSTREAM} ${WARN} ${CRIT} "${RESULT}"
+    UPSTREAMBITS=$(find_xml_value "${STATUS}" NewLayer1UpstreamMaxBitRate)
+    require_number "${UPSTREAMBITS}" "Could not parse upstream"
+    UPSTREAM=$(echo "scale=3;$UPSTREAMBITS/$RATE" | bc)
+    RESULT="Upstream ${UPSTREAM} ${PRE}bits per second"
+    echo "${RESULT}"
     ;;
 downstream)
-    DOWNSTREAM=$(find_xml_value "${STATUS}" NewLayer1DownstreamMaxBitRate)
-    require_number "${DOWNSTREAM}" "Could not parse downstream"
-
-    RESULT="Downstream ${DOWNSTREAM} bits per second"
-
-    check_greater ${DOWNSTREAM} ${WARN} ${CRIT} "${RESULT}"
+    DOWNSTREAMBITS=$(find_xml_value "${STATUS}" NewLayer1DownstreamMaxBitRate)
+    require_number "${DOWNSTREAMBITS}" "Could not parse downstream"
+    DOWNSTREAM=$(echo "scale=3;$DOWNSTREAMBITS/$RATE" | bc)
+    RESULT="Downstream ${DOWNSTREAM} ${PRE}bits per second"
+    echo "${RESULT}"
     ;;
 bandwidthdown)
     BANDWIDTHDOWNBYTES=$(find_xml_value "${STATUS}" NewByteReceiveRate)
     #BANDWIDTHDOWN=$((BANDWIDTHDOWNBITS/RATE))
     BANDWIDTHDOWN=$(echo "scale=3;$BANDWIDTHDOWNBYTES/$RATE" | bc)
-    RESULT="Current download ${BANDWIDTHDOWN} ${PRE} per second"
+    RESULT="Current download ${BANDWIDTHDOWN} ${PRE}bytes per second"
     echo "${RESULT}"
     #check_greater ${BANDWIDTHDOWN} ${WARN} ${CRIT} "${RESULT}"
     ;;
 bandwidthup)
     BANDWIDTHUPBYTES=$(find_xml_value "${STATUS}" NewByteSendRate)
     BANDWIDTHUP=$(echo "scale=3;$BANDWIDTHUPBYTES/$RATE" | bc)
-    RESULT="Current upload ${BANDWIDTHUP} ${PRE} per second"
+    RESULT="Current upload ${BANDWIDTHUP} ${PRE}bytes per second"
     echo "${RESULT}"
     #check_greater ${BANDWIDTHUP} ${WARN} ${CRIT} "${RESULT}"
     ;;
 totalbwdown)
     TOTALBWDOWNBYTES=$(find_xml_value "${STATUS}" NewTotalBytesReceived)
     TOTALBWDOWN=$(echo "scale=3;$TOTALBWDOWNBYTES/$RATE" | bc)
-    RESULT="total download ${TOTALBWDOWN} ${PRE}"
+    RESULT="total download ${TOTALBWDOWN} ${PRE}bytes"
     echo $RESULT
     #check_greater ${TOTALBWDOWN} ${WARN} ${CRIT} "${RESULT}"
     ;;
 totalbwup)
     TOTALBWUPBYTES=$(find_xml_value "${STATUS}" NewTotalBytesSent)
     TOTALBWUP=$(echo "scale=3;$TOTALBWUPBYTES/$RATE" | bc)
-    RESULT="total uploads ${TOTALBWUP} ${PRE}"
+    RESULT="total uploads ${TOTALBWUP} ${PRE}bytes"
     echo $RESULT
     #check_greater ${TOTALBWUP} ${WARN} ${CRIT} "${RESULT}"
     ;;
