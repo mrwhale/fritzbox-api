@@ -7,6 +7,7 @@ So lets give a thanks to
 - http://blog.gmeiners.net/2013/09/fritzbox-mit-nagios-uberwachen.html#
 and
 - https://github.com/Harrdy/pimatic-fritzbox-upnp
+- https://stackoverflow.com/questions/12524437/output-json-from-bash-script#12524510
 
 Script can output:
 - link uptime 

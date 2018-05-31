@@ -1,13 +1,9 @@
 #!/bin/bash
-#
-# Thanks to http://blog.gmeiners.net/2013/09/fritzbox-mit-nagios-uberwachen.html# for the basis of the original script
-#and https://stackoverflow.com/questions/12524437/output-json-from-bash-script#12524510
-#
 RC_OK=0
 RC_WARN=1
 RC_CRIT=2
 RC_UNKNOWN=3
-HOSTNAME=127.0.0.1
+HOSTNAME=fritz.box
 CHECK=bandwidthdown
 CURL=/usr/bin/curl
 usage(){
@@ -24,7 +20,7 @@ usage(){
     echo "    bandwidthup = Current bandwidth up"
     echo "    totalbwdown = total downloads"
     echo "    totalbwup = total uploads"
-    echo "Default with no added parameters"
+    echo "bandwidth down is the efault if no added parameters"
     exit ${RC_UNKNOWN}
 }
 
@@ -247,32 +243,27 @@ downstream)
     ;;
 bandwidthdown)
     BANDWIDTHDOWNBYTES=$(find_xml_value "${STATUS}" NewByteReceiveRate)
-    #BANDWIDTHDOWN=$((BANDWIDTHDOWNBITS/RATE))
     BANDWIDTHDOWN=$(echo "scale=3;$BANDWIDTHDOWNBYTES/$RATE" | bc)
     RESULT="Current download ${BANDWIDTHDOWN} ${PRE}bytes per second"
     echo "${RESULT}"
-    #check_greater ${BANDWIDTHDOWN} ${WARN} ${CRIT} "${RESULT}"
     ;;
 bandwidthup)
     BANDWIDTHUPBYTES=$(find_xml_value "${STATUS}" NewByteSendRate)
     BANDWIDTHUP=$(echo "scale=3;$BANDWIDTHUPBYTES/$RATE" | bc)
     RESULT="Current upload ${BANDWIDTHUP} ${PRE}bytes per second"
     echo "${RESULT}"
-    #check_greater ${BANDWIDTHUP} ${WARN} ${CRIT} "${RESULT}"
     ;;
 totalbwdown)
     TOTALBWDOWNBYTES=$(find_xml_value "${STATUS}" NewTotalBytesReceived)
     TOTALBWDOWN=$(echo "scale=3;$TOTALBWDOWNBYTES/$RATE" | bc)
     RESULT="total download ${TOTALBWDOWN} ${PRE}bytes"
     echo $RESULT
-    #check_greater ${TOTALBWDOWN} ${WARN} ${CRIT} "${RESULT}"
     ;;
 totalbwup)
     TOTALBWUPBYTES=$(find_xml_value "${STATUS}" NewTotalBytesSent)
     TOTALBWUP=$(echo "scale=3;$TOTALBWUPBYTES/$RATE" | bc)
     RESULT="total uploads ${TOTALBWUP} ${PRE}bytes"
     echo $RESULT
-    #check_greater ${TOTALBWUP} ${WARN} ${CRIT} "${RESULT}"
     ;;
 connection)
     STATE=$(find_xml_value "${STATUS}" NewConnectionStatus)
