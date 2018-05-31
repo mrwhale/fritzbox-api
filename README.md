@@ -14,9 +14,9 @@ Script can output:
 - maximum upstream sync speed on current connection
 - maximum downstream sync speed on current connection
 - Current downstream bandwidth usage
-- Current upstream bandwidth usage (Not yet implemented)
-- Total download usage on current connection (Not yet implemented)
-- Total upload usage on current connection (Not yet implemented)
+- Current upstream bandwidth usage
+- Total download usage on current connection
+- Total upload usage on current connection
 
 This can also output all of the above in  JSON format, useful for ingesting into another program and when running via cron (e.g I read this information into openHAB)
 
