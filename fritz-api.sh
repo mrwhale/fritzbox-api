@@ -127,7 +127,7 @@ print_json(){
         echo $TOTALBWDOWNBYTES
         echo $TOTALBWUPBYTES
     fi
-    printf '{"Connection":"%s","Uptime":%d,"UpstreamSync":%d,"DownstreamSync":%d,"UploadBW":%d,"DownloadBW":%d,"TotalUploads":%d,"TotalDownloads":%d}\n' "$CONNECTIONSTATUS" $UPTIME $UPSTREAM $DOWNSTREAM $BANDWIDTHUPBYTES $BANDWITDHDOWNBYTES $TOTALBWUPBYTES $TOTALBWDOWNBYTES
+    printf '{"Connection":"%s","Uptime":%d,"UpstreamSync":%d,"DownstreamSync":%d,"UploadBW":%d,"DownloadBW":%d,"TotalUploads":%d,"TotalDownloads":%d}\n' "$CONNECTIONSTATUS" "$UPTIME" "$UPSTREAM" "$DOWNSTREAM" "$BANDWIDTHUPBYTES" $BANDWIDTHDOWNBYTES" "$TOTALBWUPBYTES" "$TOTALBWDOWNBYTES"
     exit #exit so we dont get unknown service check error
 }
 
