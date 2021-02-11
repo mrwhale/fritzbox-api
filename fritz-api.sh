@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env/bash
 RC_OK=0
 RC_WARN=1
 RC_CRIT=2
