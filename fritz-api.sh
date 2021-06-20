@@ -3,13 +3,13 @@ RC_OK=0
 RC_WARN=1
 RC_CRIT=2
 RC_UNKNOWN=3
-HOSTNAME=127.0.0.1
+HOSTNAME="fritz.box"
 CHECK=bandwidthdown
 MY_SCRIPT_NAME=$(basename "$0")
 # Duration we wait for curl response.
 MY_CURL_TIMEOUT="5"
 usage(){
-    echo "usage: $MY_SCRIPT_NAME -d -j -h hostname -f <function> [-b rate]"
+    echo "usage: $MY_SCRIPT_NAME -h hostname -f <function> [-d] [-j] [-b rate]"
     echo "    -d: enable debug output"
     echo "    -j: JSON output. Does not accept any functions. Will display all output in json format. Useful for running in cron and ingesting into another program"
     echo "    -b: rate to display. b, k, m. all in  bytes"
