@@ -140,6 +140,11 @@ print_json(){
     exit #exit so we dont get unknown service check error
 }
 
+
+# Check Commands
+command -v curl >/dev/null 2>&1 || { echo >&2 "ERROR: 'curl' is needed. Please install 'curl'. More details can be found at https://curl.haxx.se/"; exit 1; }
+command -v bc >/dev/null 2>&1 || { echo >&2 "ERROR: 'bc' is needed. Please install 'bc'."; exit 1; }
+
 PORT=49000
 DEBUG=0
 WARN=0
