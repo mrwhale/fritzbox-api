@@ -1,26 +1,37 @@
 #!/usr/bin/env/bash
+
 RC_OK=0
 RC_WARN=1
 RC_CRIT=2
 RC_UNKNOWN=3
-HOSTNAME=127.0.0.1
-CHECK=bandwidthdown
-CURL=/usr/bin/curl
+HOSTNAME="fritz.box"
+CHECK="bandwidthdown"
+MY_SCRIPT_NAME=$(basename "$0")
+# Duration we wait for curl response.
+MY_CURL_TIMEOUT="5"
+
 usage(){
-    echo "usage: check_fritz -d -j -h hostname -f <function> [-b rate]"
-    echo "    -d: enable debug output"
-    echo "    -j: JSON output. Does not accept any functions. Will display all output in json format. Useful for running in cron and ingesting into another program"
-    echo "    -b: rate to display. b, k, m. all in  bytes"
+    echo "usage: $MY_SCRIPT_NAME [-f <function>] [-h hostname] [-b rate] [-j] [-d]"
+    echo "  -f: function to be executed [Default: ${CHECK}]"
+    echo "  -h: hostname or IP of the FRITZ!Box [Default: ${HOSTNAME}]"
+    echo "  -b: rate to display. b, k, m. all in  bytes"
+    echo "  -j: JSON output"
+    echo "      Does not accept any functions."
+    echo "      Will display all output in JSON format."
+    echo "      Useful for running in cron and ingesting into another program"
+    echo "  -d: enable debug output"
+    echo
     echo "functions:"
-    echo "    linkuptime = connection time in seconds."
-    echo "    connection = connection status".
-    echo "    upstream   = maximum upstream on current connection (Upstream Sync)."
-    echo "    downstream = maximum downstream on current connection (Downstream Sync)."
-    echo "    bandwidthdown = Current bandwidth down"
-    echo "    bandwidthup = Current bandwidth up"
-    echo "    totalbwdown = total downloads"
-    echo "    totalbwup = total uploads"
-    echo "bandwidth down is the default if no added parameters"
+    echo "  linkuptime     connection time in seconds"
+    echo "  connection     connection status"
+    echo "  downstream     maximum downstream on current connection (Downstream Sync)"
+    echo "  upstream       maximum upstream on current connection (Upstream Sync)"
+    echo "  bandwidthdown  current bandwidth down"
+    echo "  bandwidthup    current bandwidth up"
+    echo "  totalbwdown    total downloads"
+    echo "  totalbwup      total uploads"
+    echo
+    echo "Example: $MY_SCRIPT_NAME -f downstream -h 192.168.100.1 -b m"
     exit ${RC_UNKNOWN}
 }
 
@@ -50,10 +61,10 @@ check_greater()
     CRIT=$3
     MSG=$4
 
-    if [ ${VAL} -gt ${WARN} ] || [ ${WARN} -eq 0 ]; then
+    if [ "${VAL}" -gt "${WARN}" ] || [ "${WARN}" -eq 0 ]; then
         echo "OK - ${MSG}"
         exit ${RC_OK}
-    elif [ ${VAL} -gt ${CRIT} ] || [ ${CRIT} -eq 0 ]; then
+    elif [ "${VAL}" -gt "${CRIT}" ] || [ "${CRIT}" -eq 0 ]; then
         echo "WARNING - ${MSG}"
         exit ${RC_WARN}
     else
@@ -75,11 +86,11 @@ print_json(){
     URL3=WANCommonIFC1
     NS3=WANCommonInterfaceConfig
 
-    STATUS1=`curl "http://${HOSTNAME}:${PORT}/igdupnp/control/${URL1}" \
-        -H "Content-Type: text/xml; charset="utf-8"" \
+    STATUS1=$(curl --max-time "${MY_CURL_TIMEOUT}" "http://${HOSTNAME}:${PORT}/igdupnp/control/${URL1}" \
+        -H "Content-Type: text/xml; charset=\"utf-8\"" \
         -H "SoapAction:urn:schemas-upnp-org:service:${NS1}:1#${VERB1}" \
-        -d "<?xml version='1.0' encoding='utf-8'?> <s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'> <s:Body> <u:${VERB1} xmlns:u="urn:schemas-upnp-org:service:${NS1}:1" /> </s:Body> </s:Envelope>" \
-        -s`
+        -d "<?xml version='1.0' encoding='utf-8'?> <s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'> <s:Body> <u:${VERB1} xmlns:u=\"urn:schemas-upnp-org:service:${NS1}:1\" /> </s:Body> </s:Envelope>" \
+        -s)
 
     if [ "$?" -ne "0" ]; then
         printf '{"Connection":"ERROR - Could not retrieve status from FRITZ!Box"}'
@@ -87,22 +98,22 @@ print_json(){
     fi
 
 
-    STATUS2=`curl "http://${HOSTNAME}:${PORT}/igdupnp/control/${URL2}" \
-        -H "Content-Type: text/xml; charset="utf-8"" \
+    STATUS2=$(curl --max-time "${MY_CURL_TIMEOUT}" "http://${HOSTNAME}:${PORT}/igdupnp/control/${URL2}" \
+        -H "Content-Type: text/xml; charset=\"utf-8\"" \
         -H "SoapAction:urn:schemas-upnp-org:service:${NS2}:1#${VERB2}" \
-        -d "<?xml version='1.0' encoding='utf-8'?> <s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'> <s:Body> <u:${VERB2} xmlns:u="urn:schemas-upnp-org:service:${NS2}:1" /> </s:Body> </s:Envelope>" \
-        -s`
+        -d "<?xml version='1.0' encoding='utf-8'?> <s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'> <s:Body> <u:${VERB2} xmlns:u=\"urn:schemas-upnp-org:service:${NS2}:1\" /> </s:Body> </s:Envelope>" \
+        -s)
 
     if [ "$?" -ne "0" ]; then
         printf '{"Connection":"ERROR - Could not retrieve status from FRITZ!Box"}'
         exit ${RC_CRIT}
     fi
 
-    STATUS3=`curl "http://${HOSTNAME}:${PORT}/igdupnp/control/${URL3}" \
-        -H "Content-Type: text/xml; charset="utf-8"" \
+    STATUS3=$(curl --max-time "${MY_CURL_TIMEOUT}" "http://${HOSTNAME}:${PORT}/igdupnp/control/${URL3}" \
+        -H "Content-Type: text/xml; charset=\"utf-8\"" \
         -H "SoapAction:urn:schemas-upnp-org:service:${NS3}:1#${VERB3}" \
-        -d "<?xml version='1.0' encoding='utf-8'?> <s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'> <s:Body> <u:${VERB3} xmlns:u="urn:schemas-upnp-org:service:${NS3}:1" /> </s:Body> </s:Envelope>" \
-        -s`
+        -d "<?xml version='1.0' encoding='utf-8'?> <s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'> <s:Body> <u:${VERB3} xmlns:u=\"urn:schemas-upnp-org:service:${NS3}:1\" /> </s:Body> </s:Envelope>" \
+        -s)
 
     if [ "$?" -ne "0" ]; then
         printf '{"Connection":"ERROR - Could not retrieve status from FRITZ!Box"}'
@@ -116,20 +127,25 @@ print_json(){
     BANDWIDTHUPBYTES=$(find_xml_value "${STATUS3}" NewByteSendRate)
     TOTALBWDOWNBYTES=$(find_xml_value "${STATUS3}" NewTotalBytesReceived)
     TOTALBWUPBYTES=$(find_xml_value "${STATUS3}" NewTotalBytesSent)
-    if [ ${DEBUG} -eq 1 ]; then
+    if [ "${DEBUG}" -eq 1 ]; then
         echo "DEBUG - Status:"
-        echo $CONNECTIONSTATUS
-        echo $UPTIME
-        echo $DOWNSTREAM
-        echo $UPSTREAM
-        echo $BANDWIDTHDOWNBYTES
-        echo $BANDWIDTHUPBYTES
-        echo $TOTALBWDOWNBYTES
-        echo $TOTALBWUPBYTES
+        echo "$CONNECTIONSTATUS"
+        echo "$UPTIME"
+        echo "$DOWNSTREAM"
+        echo "$UPSTREAM"
+        echo "$BANDWIDTHDOWNBYTES"
+        echo "$BANDWIDTHUPBYTES"
+        echo "$TOTALBWDOWNBYTES"
+        echo "$TOTALBWUPBYTES"
     fi
-    printf '{"Connection":"%s","Uptime":%d,"UpstreamSync":%d,"DownstreamSync":%d,"UploadBW":%d,"DownloadBW":%d,"TotalUploads":%d,"TotalDownloads":%d}\n' "$CONNECTIONSTATUS" "$UPTIME" "$UPSTREAM" "$DOWNSTREAM" "$BANDWIDTHUPBYTES" $BANDWIDTHDOWNBYTES" "$TOTALBWUPBYTES" "$TOTALBWDOWNBYTES"
+    printf '{"Connection":"%s","Uptime":%d,"UpstreamSync":%d,"DownstreamSync":%d,"UploadBW":%d,"DownloadBW":%d,"TotalUploads":%d,"TotalDownloads":%d}\n' "$CONNECTIONSTATUS" "$UPTIME" "$UPSTREAM" "$DOWNSTREAM" "$BANDWIDTHUPBYTES" "$BANDWIDTHDOWNBYTES" "$TOTALBWUPBYTES" "$TOTALBWDOWNBYTES"
     exit #exit so we dont get unknown service check error
 }
+
+
+# Check Commands
+command -v curl >/dev/null 2>&1 || { echo >&2 "ERROR: 'curl' is needed. Please install 'curl'. More details can be found at https://curl.haxx.se/"; exit 1; }
+command -v bc >/dev/null 2>&1 || { echo >&2 "ERROR: 'bc' is needed. Please install 'bc'."; exit 1; }
 
 PORT=49000
 DEBUG=0
@@ -173,7 +189,7 @@ while getopts h:jf:db: OPTNAME; do
         esac
         ;;
     *)
-        echo $OPTNAME
+        echo "$OPTNAME"
         usage
         ;;
     esac
@@ -201,11 +217,11 @@ case ${CHECK} in
         ;;
 esac
 
-STATUS=`curl "http://${HOSTNAME}:${PORT}/igdupnp/control/${URL}" \
-    -H "Content-Type: text/xml; charset="utf-8"" \
+STATUS=$(curl --max-time "${MY_CURL_TIMEOUT}" "http://${HOSTNAME}:${PORT}/igdupnp/control/${URL}" \
+    -H "Content-Type: text/xml; charset=\"utf-8\"" \
     -H "SoapAction:urn:schemas-upnp-org:service:${NS}:1#${VERB}" \
-    -d "<?xml version='1.0' encoding='utf-8'?> <s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'> <s:Body> <u:${VERB} xmlns:u="urn:schemas-upnp-org:service:${NS}:1" /> </s:Body> </s:Envelope>" \
-    -s`
+    -d "<?xml version='1.0' encoding='utf-8'?> <s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'> <s:Body> <u:${VERB} xmlns:u=\"urn:schemas-upnp-org:service:${NS}:1\" /> </s:Body> </s:Envelope>" \
+    -s)
 
 if [ "$?" -ne "0" ]; then
     echo "ERROR - Could not retrieve status from FRITZ!Box"
@@ -224,7 +240,7 @@ linkuptime)
     HOURS=$((${UPTIME}/3600))
     MINUTES=$(((${UPTIME}-(${HOURS}*3600))/60))
     SECONDS=$((${UPTIME}-(${HOURS}*3600)-(${MINUTES}*60)))
-    RESULT="Link uptime ${UPTIME} seconds (${HOURS}h ${MINUTES}m ${SECONDS}s)"
+    RESULT="Link uptime ${UPTIME} seconds [${HOURS}h ${MINUTES}m ${SECONDS}s]"
     echo "${RESULT}"
     ;;
 upstream)
@@ -257,13 +273,13 @@ totalbwdown)
     TOTALBWDOWNBYTES=$(find_xml_value "${STATUS}" NewTotalBytesReceived)
     TOTALBWDOWN=$(echo "scale=3;$TOTALBWDOWNBYTES/$RATE" | bc)
     RESULT="total download ${TOTALBWDOWN} ${PRE}bytes"
-    echo $RESULT
+    echo "$RESULT"
     ;;
 totalbwup)
     TOTALBWUPBYTES=$(find_xml_value "${STATUS}" NewTotalBytesSent)
     TOTALBWUP=$(echo "scale=3;$TOTALBWUPBYTES/$RATE" | bc)
     RESULT="total uploads ${TOTALBWUP} ${PRE}bytes"
-    echo $RESULT
+    echo "$RESULT"
     ;;
 connection)
     STATE=$(find_xml_value "${STATUS}" NewConnectionStatus)
