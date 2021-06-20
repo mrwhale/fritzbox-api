@@ -6,7 +6,8 @@ RC_UNKNOWN=3
 HOSTNAME=127.0.0.1
 CHECK=bandwidthdown
 MY_SCRIPT_NAME=$(basename "$0")
-
+# Duration we wait for curl response.
+MY_CURL_TIMEOUT="5"
 usage(){
     echo "usage: $MY_SCRIPT_NAME -d -j -h hostname -f <function> [-b rate]"
     echo "    -d: enable debug output"
@@ -76,7 +77,7 @@ print_json(){
     URL3=WANCommonIFC1
     NS3=WANCommonInterfaceConfig
 
-    STATUS1=$(curl "http://${HOSTNAME}:${PORT}/igdupnp/control/${URL1}" \
+    STATUS1=$(curl --max-time "${MY_CURL_TIMEOUT}" "http://${HOSTNAME}:${PORT}/igdupnp/control/${URL1}" \
         -H "Content-Type: text/xml; charset=\"utf-8\"" \
         -H "SoapAction:urn:schemas-upnp-org:service:${NS1}:1#${VERB1}" \
         -d "<?xml version='1.0' encoding='utf-8'?> <s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'> <s:Body> <u:${VERB1} xmlns:u=\"urn:schemas-upnp-org:service:${NS1}:1\" /> </s:Body> </s:Envelope>" \
@@ -88,7 +89,7 @@ print_json(){
     fi
 
 
-    STATUS2=$(curl "http://${HOSTNAME}:${PORT}/igdupnp/control/${URL2}" \
+    STATUS2=$(curl --max-time "${MY_CURL_TIMEOUT}" "http://${HOSTNAME}:${PORT}/igdupnp/control/${URL2}" \
         -H "Content-Type: text/xml; charset=\"utf-8\"" \
         -H "SoapAction:urn:schemas-upnp-org:service:${NS2}:1#${VERB2}" \
         -d "<?xml version='1.0' encoding='utf-8'?> <s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'> <s:Body> <u:${VERB2} xmlns:u=\"urn:schemas-upnp-org:service:${NS2}:1\" /> </s:Body> </s:Envelope>" \
@@ -99,7 +100,7 @@ print_json(){
         exit ${RC_CRIT}
     fi
 
-    STATUS3=$(curl "http://${HOSTNAME}:${PORT}/igdupnp/control/${URL3}" \
+    STATUS3=$(curl --max-time "${MY_CURL_TIMEOUT}" "http://${HOSTNAME}:${PORT}/igdupnp/control/${URL3}" \
         -H "Content-Type: text/xml; charset=\"utf-8\"" \
         -H "SoapAction:urn:schemas-upnp-org:service:${NS3}:1#${VERB3}" \
         -d "<?xml version='1.0' encoding='utf-8'?> <s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'> <s:Body> <u:${VERB3} xmlns:u=\"urn:schemas-upnp-org:service:${NS3}:1\" /> </s:Body> </s:Envelope>" \
@@ -202,7 +203,7 @@ case ${CHECK} in
         ;;
 esac
 
-STATUS=$(curl "http://${HOSTNAME}:${PORT}/igdupnp/control/${URL}" \
+STATUS=$(curl --max-time "${MY_CURL_TIMEOUT}" "http://${HOSTNAME}:${PORT}/igdupnp/control/${URL}" \
     -H "Content-Type: text/xml; charset=\"utf-8\"" \
     -H "SoapAction:urn:schemas-upnp-org:service:${NS}:1#${VERB}" \
     -d "<?xml version='1.0' encoding='utf-8'?> <s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'> <s:Body> <u:${VERB} xmlns:u=\"urn:schemas-upnp-org:service:${NS}:1\" /> </s:Body> </s:Envelope>" \
