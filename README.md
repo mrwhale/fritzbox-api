@@ -33,23 +33,32 @@ You can do that in the settings: Home Network » Network » Network Settings
 Enable "Transmit status information over UPnP" (German: Statusinformationen über UPnP übertragen).
 
 ## Usage
-```
-usage: fritz -d -j -h hostname -f <function> [-b rate]
-    -d: enable debug output
-    -j: JSON output. Does not accept any functions. Will display all output in json format. Useful for running in cron and ingesting into another program
-    -b: rate to display. b, k, m. all in  bytes
+
+```text
+usage: fritz-api.sh [-f <function>] [-h hostname] [-b rate] [-j] [-d]
+  -f: function to be executed [Default: bandwidthdown]
+  -h: hostname or IP of the FRITZ!Box [Default: fritz.box]
+  -b: rate to display. b, k, m. all in  bytes
+  -j: JSON output
+      Does not accept any functions.
+      Will display all output in JSON format.
+      Useful for running in cron and ingesting into another program
+  -d: enable debug output
+
 functions:
-    linkuptime = connection time in seconds.
-    connection = connection status.
-    upstream   = maximum upstream on current connection (Upstream Sync).
-    downstream = maximum downstream on current connection (Downstream Sync).
-    bandwidthdown = Current bandwidth down
-    bandwidthup = Current bandwidth up
-    totalbwdown = total downloads
-    totalbwup = total uploads
-bandwidth down is the default if no added parameters
+  linkuptime     connection time in seconds
+  connection     connection status
+  downstream     maximum downstream on current connection (Downstream Sync)
+  upstream       maximum upstream on current connection (Upstream Sync)
+  bandwidthdown  current bandwidth down
+  bandwidthup    current bandwidth up
+  totalbwdown    total downloads
+  totalbwup      total uploads
+
+Example: fritz-api.sh -f downstream -h 192.168.100.1 -b m
 ```
 
-#### dependancies
-- bc
+## Dependancies
+
 - curl
+- bc

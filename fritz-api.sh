@@ -9,20 +9,27 @@ MY_SCRIPT_NAME=$(basename "$0")
 # Duration we wait for curl response.
 MY_CURL_TIMEOUT="5"
 usage(){
-    echo "usage: $MY_SCRIPT_NAME -h hostname -f <function> [-d] [-j] [-b rate]"
-    echo "    -d: enable debug output"
-    echo "    -j: JSON output. Does not accept any functions. Will display all output in json format. Useful for running in cron and ingesting into another program"
-    echo "    -b: rate to display. b, k, m. all in  bytes"
+    echo "usage: $MY_SCRIPT_NAME [-f <function>] [-h hostname] [-b rate] [-j] [-d]"
+    echo "  -f: function to be executed [Default: bandwidthdown]"
+    echo "  -h: hostname or IP of the FRITZ!Box [Default: ${HOSTNAME}]"
+    echo "  -b: rate to display. b, k, m. all in  bytes"
+    echo "  -j: JSON output"
+    echo "      Does not accept any functions."
+    echo "      Will display all output in JSON format."
+    echo "      Useful for running in cron and ingesting into another program"
+    echo "  -d: enable debug output"
+    echo
     echo "functions:"
-    echo "    linkuptime = connection time in seconds."
-    echo "    connection = connection status".
-    echo "    upstream   = maximum upstream on current connection (Upstream Sync)."
-    echo "    downstream = maximum downstream on current connection (Downstream Sync)."
-    echo "    bandwidthdown = Current bandwidth down"
-    echo "    bandwidthup = Current bandwidth up"
-    echo "    totalbwdown = total downloads"
-    echo "    totalbwup = total uploads"
-    echo "bandwidth down is the default if no added parameters"
+    echo "  linkuptime     connection time in seconds"
+    echo "  connection     connection status"
+    echo "  downstream     maximum downstream on current connection (Downstream Sync)"
+    echo "  upstream       maximum upstream on current connection (Upstream Sync)"
+    echo "  bandwidthdown  current bandwidth down"
+    echo "  bandwidthup    current bandwidth up"
+    echo "  totalbwdown    total downloads"
+    echo "  totalbwup      total uploads"
+    echo
+    echo "Example: $MY_SCRIPT_NAME -f downstream -h 192.168.100.1 -b m"
     exit ${RC_UNKNOWN}
 }
 
