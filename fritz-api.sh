@@ -5,7 +5,7 @@ RC_CRIT=2
 RC_UNKNOWN=3
 HOSTNAME=127.0.0.1
 CHECK=bandwidthdown
-CURL=/usr/bin/curl
+
 usage(){
     echo "usage: check_fritz -d -j -h hostname -f <function> [-b rate]"
     echo "    -d: enable debug output"
