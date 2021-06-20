@@ -1,16 +1,18 @@
 #!/usr/bin/env/bash
+
 RC_OK=0
 RC_WARN=1
 RC_CRIT=2
 RC_UNKNOWN=3
 HOSTNAME="fritz.box"
-CHECK=bandwidthdown
+CHECK="bandwidthdown"
 MY_SCRIPT_NAME=$(basename "$0")
 # Duration we wait for curl response.
 MY_CURL_TIMEOUT="5"
+
 usage(){
     echo "usage: $MY_SCRIPT_NAME [-f <function>] [-h hostname] [-b rate] [-j] [-d]"
-    echo "  -f: function to be executed [Default: bandwidthdown]"
+    echo "  -f: function to be executed [Default: ${CHECK}]"
     echo "  -h: hostname or IP of the FRITZ!Box [Default: ${HOSTNAME}]"
     echo "  -b: rate to display. b, k, m. all in  bytes"
     echo "  -j: JSON output"
