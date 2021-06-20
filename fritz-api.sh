@@ -50,10 +50,10 @@ check_greater()
     CRIT=$3
     MSG=$4
 
-    if [ ${VAL} -gt ${WARN} ] || [ ${WARN} -eq 0 ]; then
+    if [ "${VAL}" -gt "${WARN}" ] || [ "${WARN}" -eq 0 ]; then
         echo "OK - ${MSG}"
         exit ${RC_OK}
-    elif [ ${VAL} -gt ${CRIT} ] || [ ${CRIT} -eq 0 ]; then
+    elif [ "${VAL}" -gt "${CRIT}" ] || [ "${CRIT}" -eq 0 ]; then
         echo "WARNING - ${MSG}"
         exit ${RC_WARN}
     else
@@ -116,16 +116,16 @@ print_json(){
     BANDWIDTHUPBYTES=$(find_xml_value "${STATUS3}" NewByteSendRate)
     TOTALBWDOWNBYTES=$(find_xml_value "${STATUS3}" NewTotalBytesReceived)
     TOTALBWUPBYTES=$(find_xml_value "${STATUS3}" NewTotalBytesSent)
-    if [ ${DEBUG} -eq 1 ]; then
+    if [ "${DEBUG}" -eq 1 ]; then
         echo "DEBUG - Status:"
-        echo $CONNECTIONSTATUS
-        echo $UPTIME
-        echo $DOWNSTREAM
-        echo $UPSTREAM
-        echo $BANDWIDTHDOWNBYTES
-        echo $BANDWIDTHUPBYTES
-        echo $TOTALBWDOWNBYTES
-        echo $TOTALBWUPBYTES
+        echo "$CONNECTIONSTATUS"
+        echo "$UPTIME"
+        echo "$DOWNSTREAM"
+        echo "$UPSTREAM"
+        echo "$BANDWIDTHDOWNBYTES"
+        echo "$BANDWIDTHUPBYTES"
+        echo "$TOTALBWDOWNBYTES"
+        echo "$TOTALBWUPBYTES"
     fi
     printf '{"Connection":"%s","Uptime":%d,"UpstreamSync":%d,"DownstreamSync":%d,"UploadBW":%d,"DownloadBW":%d,"TotalUploads":%d,"TotalDownloads":%d}\n' "$CONNECTIONSTATUS" "$UPTIME" "$UPSTREAM" "$DOWNSTREAM" "$BANDWIDTHUPBYTES" "$BANDWIDTHDOWNBYTES" "$TOTALBWUPBYTES" "$TOTALBWDOWNBYTES"
     exit #exit so we dont get unknown service check error
@@ -173,7 +173,7 @@ while getopts h:jf:db: OPTNAME; do
         esac
         ;;
     *)
-        echo $OPTNAME
+        echo "$OPTNAME"
         usage
         ;;
     esac
@@ -257,13 +257,13 @@ totalbwdown)
     TOTALBWDOWNBYTES=$(find_xml_value "${STATUS}" NewTotalBytesReceived)
     TOTALBWDOWN=$(echo "scale=3;$TOTALBWDOWNBYTES/$RATE" | bc)
     RESULT="total download ${TOTALBWDOWN} ${PRE}bytes"
-    echo $RESULT
+    echo "$RESULT"
     ;;
 totalbwup)
     TOTALBWUPBYTES=$(find_xml_value "${STATUS}" NewTotalBytesSent)
     TOTALBWUP=$(echo "scale=3;$TOTALBWUPBYTES/$RATE" | bc)
     RESULT="total uploads ${TOTALBWUP} ${PRE}bytes"
-    echo $RESULT
+    echo "$RESULT"
     ;;
 connection)
     STATE=$(find_xml_value "${STATUS}" NewConnectionStatus)
