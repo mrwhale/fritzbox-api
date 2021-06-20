@@ -127,7 +127,7 @@ print_json(){
         echo $TOTALBWDOWNBYTES
         echo $TOTALBWUPBYTES
     fi
-    printf '{"Connection":"%s","Uptime":%d,"UpstreamSync":%d,"DownstreamSync":%d,"UploadBW":%d,"DownloadBW":%d,"TotalUploads":%d,"TotalDownloads":%d}\n' "$CONNECTIONSTATUS" "$UPTIME" "$UPSTREAM" "$DOWNSTREAM" "$BANDWIDTHUPBYTES" $BANDWIDTHDOWNBYTES" "$TOTALBWUPBYTES" "$TOTALBWDOWNBYTES"
+    printf '{"Connection":"%s","Uptime":%d,"UpstreamSync":%d,"DownstreamSync":%d,"UploadBW":%d,"DownloadBW":%d,"TotalUploads":%d,"TotalDownloads":%d}\n' "$CONNECTIONSTATUS" "$UPTIME" "$UPSTREAM" "$DOWNSTREAM" "$BANDWIDTHUPBYTES" "$BANDWIDTHDOWNBYTES" "$TOTALBWUPBYTES" "$TOTALBWDOWNBYTES"
     exit #exit so we dont get unknown service check error
 }
 
@@ -224,7 +224,7 @@ linkuptime)
     HOURS=$((${UPTIME}/3600))
     MINUTES=$(((${UPTIME}-(${HOURS}*3600))/60))
     SECONDS=$((${UPTIME}-(${HOURS}*3600)-(${MINUTES}*60)))
-    RESULT="Link uptime ${UPTIME} seconds (${HOURS}h ${MINUTES}m ${SECONDS}s)"
+    RESULT="Link uptime ${UPTIME} seconds [${HOURS}h ${MINUTES}m ${SECONDS}s]"
     echo "${RESULT}"
     ;;
 upstream)
